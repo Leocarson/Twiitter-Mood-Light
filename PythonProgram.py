@@ -1,3 +1,4 @@
+#Import everything
 from __future__ import division
 import time
 import csv
@@ -7,7 +8,7 @@ from TwitterAPI import TwitterAPI
 # [angry, happy, sad]
 emotion = [0,0,0]
 
-# [R,G,B]
+#Initialize all the variables
 owe = "Nothing"
 blinking = 0
 BlinkIO = False
@@ -37,10 +38,10 @@ osup = 0
 # number of times colour has been logged
 count = 0
 
-# delay between each log
+# delay between each log and blink
 delay = 60
 blinkDelay = 2
-# sets timer
+# sets timers
 timeout = time.time() + delay
 blinktimer = time.time() + blinkDelay
 #Boolean value for if Arduino is connected
@@ -54,10 +55,10 @@ TRACK_TERM = "i love you, i love her, i love him, all my love,i'm in love,i real
 
 
 # KEEP SECRET
-CONSUMER_KEY = 'AyseNJkCcwJTROFYcH1WHtVUd'
-CONSUMER_SECRET = 'Hlky1qEVNQE5LB1jFBkQTyVzEHz06BBhUqPMB4cxYXaanKOpkz'
-ACCESS_TOKEN_KEY = '844230415191871490-BCqZfEE5y3ZzIXHE5egzQPRG3eBbu1B'
-ACCESS_TOKEN_SECRET = 'D4PMkMAJ6JpV13UPr70VSuhKy95CZVorINmT08ccj4PM5'
+CONSUMER_KEY = ''
+CONSUMER_SECRET = ''
+ACCESS_TOKEN_KEY = ''
+ACCESS_TOKEN_SECRET = ''
 
 api = TwitterAPI(
     CONSUMER_KEY,
@@ -65,7 +66,8 @@ api = TwitterAPI(
     ACCESS_TOKEN_KEY,
     ACCESS_TOKEN_SECRET)
 
-# Emotion algorithm
+#Make send fucntion
+#Don't know why I need it like this, it was the only way it would work
 def send (emotion):
     serialColour = ','.join(map(str,off))
     ser.write(serialColour.encode())
@@ -79,15 +81,18 @@ def send (emotion):
     time.sleep(0.4)
     ser.write(serv)
     print "Sent twice"
+#send function for blinking
 def sendBlink(emotion):
     serialColour = ','.join(map(str,emotion))
     ser.write(serialColour.encode())
+#Calculate percentage
 def percentage(mood):
     output1 = mood / ecount
     output2 = output1 * 100
     output3 = int(output2)
     print output3
     return output3
+#Calculate the change in percentages
 def Calc_Change(per,old):
     if per == 0 and old == 0:
         print 0
@@ -107,6 +112,7 @@ def Calc_Change(per,old):
         out = per / old
         print out
         return out
+#Calculate if there is a large change
 def ColorCalc(emotion,colorval):
     global color
     global BlinkIO
@@ -129,6 +135,7 @@ send(off)
 r = api.request('statuses/filter', {'track': TRACK_TERM})
 
 for item in r: # for each tweet
+    #If the blink ran out blink
     if time.time() > blinktimer and BlinkIO == True:
         
         print blinking
@@ -143,6 +150,7 @@ for item in r: # for each tweet
             print "blink off"
         blinktimer = time.time() + blinkDelay
     if time.time() > timeout: # If time elapsed
+        #Print percentages
         print "Percentages"
         pmad = percentage(mad)
         psad = percentage(sad)
@@ -151,6 +159,7 @@ for item in r: # for each tweet
         psup = percentage(suprise)
         pscr = percentage(scared)
         plov = percentage(love)
+        #Print changes
         print "Change"
         fmad = Calc_Change(pmad,omad)
         fsad = Calc_Change(psad,osad)
@@ -159,12 +168,16 @@ for item in r: # for each tweet
         fsup = Calc_Change(psup,osup)
         fscr = Calc_Change(pscr,oscr)
         flov = Calc_Change(plov,olov)
+        #Find largest change
         emotions = {'mad' : fmad, 'sad' : fsad, 'happy' : fhap, 'envy' : fenv, 'suprise' : fsup, 'scared' : fscr, 'love' : flov}
         we = max(emotions,key=emotions.get)
+        #Print that
         print "the world's mood is: " + we
+        #Check if the color is the same as the last one
         if we == owe:
             print "Same emotion"
         else:
+            #Change colors
             if we == 'mad':
                 blinkI = ColorCalc(fmad,cmad)
                 if blinkI == False:
@@ -197,6 +210,7 @@ for item in r: # for each tweet
                 blinkI = ColorCalc(flov,clov)
                 if blinkI == False:
                     send(clov)
+        #Reset
         owe = we
         omad = pmad
         osad = psad
@@ -217,7 +231,7 @@ for item in r: # for each tweet
         
     #Manipulates tweet to add to emotion counter    
     leitem = item['text'] if 'text' in item else item # select tweet text
-    
+    #Get keywords
     if ('i hate' or 'really angry' or 'i am mad' or 'really hate' or 'so angry') in leitem: # if tweet contains angry
         mad += 1
         ecount += 1
@@ -249,6 +263,6 @@ for item in r: # for each tweet
         
 
         
-        
+       
 ser.close()
 
